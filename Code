@@ -1,0 +1,106 @@
+import hashlib
+import datetime
+import getpass  # hidden password input
+
+# ---------------- DATABASE ----------------
+users = {}
+logs = []
+
+# ---------------- PASSWORD HASHING ----------------
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+# ---------------- REGISTER USER ----------------
+def register_user():
+    print("\n📝 Register New User")
+    username = input("👤 Enter username: ").strip()
+    if username in users:
+        print("⚠️ User already exists. Try logging in.")
+        return
+    password = getpass.getpass("🔑 Enter password: ").strip()
+    role = input("🎭 Enter role (admin/auditor/user): ").strip().lower()
+    if role not in ["admin", "auditor", "user"]:
+        print("⚠️ Invalid role! Defaulting to 'user'.")
+        role = "user"
+    users[username] = {"password": hash_password(password), "role": role}
+    logs.append(f"[{datetime.datetime.now()}] {username} registered as {role}.")
+    print(f"✅ User '{username}' registered successfully as '{role}'!")
+
+# ---------------- LOGIN USER ----------------
+def login_user():
+    print("\n🔐 User Login")
+    username = input("👤 Username: ").strip()
+    if username not in users:
+        print("❌ No such user found! Register first.")
+        return None
+    password = getpass.getpass("🔑 Enter password: ").strip()
+    if users[username]["password"] == hash_password(password):
+        print(f"✅ Login successful! Welcome back, {username} ({users[username]['role']}) ✨")
+        logs.append(f"[{datetime.datetime.now()}] {username} logged in successfully.")
+        return username
+    else:
+        print("🚫 Incorrect password! Access denied.")
+        return None
+
+# ---------------- ACCESS CONTROL ----------------
+def access_resource(username):
+    print("\n📂 Access Resources")
+    role = users[username]["role"]
+    print(f"🪪 You are logged in as: {role.upper()}")
+    print("Resources available: 🔹 read_data 🔹 delete_data 🔹 view_logs")
+    resource = input("Enter resource to access: ").strip()
+
+    if role == "admin":
+        print(f"🔓 Admin '{username}' has full access to '{resource}' ✅")
+    elif role == "auditor" and resource in ["view_logs", "read_data"]:
+        print(f"📊 Auditor '{username}' can view '{resource}' 🕵️‍♂️")
+    elif role == "user" and resource == "read_data":
+        print(f"📗 User '{username}' can read data ✅")
+    else:
+        print(f"🚫 Access denied! '{username}' cannot access '{resource}'.")
+    logs.append(f"[{datetime.datetime.now()}] {username} tried to access '{resource}' as '{role}'.")
+
+# ---------------- VIEW LOGS ----------------
+def show_logs():
+    print("\n📜 Activity Logs (Transparency Report):")
+    if not logs:
+        print("No logs available yet.")
+    for log in logs:
+        print(log)
+
+# ---------------- MAIN MENU ----------------
+def main_menu():
+    print("\n🌐 Role Based Access Control")
+    print("🕊️ Supporting SDG 16: Peace, Justice, and Strong Institutions")
+    print("---------------------------------------------------------------")
+
+    while True:
+        print("\n📋 Menu:")
+        print("1️⃣ Register User")
+        print("2️⃣ Login")
+        print("3️⃣ View Logs (Admin only)")
+        print("4️⃣ Exit")
+
+        choice = input("\n👉 Enter your choice (1-4): ").strip()
+
+        if choice == "1":
+            register_user()
+        elif choice == "2":
+            user = login_user()
+            if user:
+                access_resource(user)
+        elif choice == "3":
+            admin_name = input("👤 Enter admin username: ").strip()
+            if admin_name in users and users[admin_name]["role"] == "admin":
+                show_logs()
+            else:
+                print("🚫 Only admins can view system logs!")
+        elif choice == "4":
+            print("\n👋 Thank you for using the IAM System! Stay secure 🔒")
+            break
+        else:
+            print("⚠️ Invalid choice! Try again.")
+
+# ---------------- RUN PROGRAM ----------------
+if __name__ == "__main__":
+    main_menu()
